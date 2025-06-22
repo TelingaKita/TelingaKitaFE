@@ -153,7 +153,7 @@ const Detection = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-5">
       <h1 className="text-2xl font-bold mb-4">
-        Deteksi Huruf Bahasa Isyarat BISINDO
+        Deteksi Huruf Bahasa Isyarat BISINDO dfadsfa
       </h1>
 
       <button
