@@ -3,7 +3,7 @@ import io from "socket.io-client";
 import { Hands } from "@mediapipe/hands";
 import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
 
-const socket = io("http://192.168.1.15:5000"); // Ganti sesuai servermu
+const socket = io("http://52.65.78.89:5000"); // Ganti sesuai servermu
 
 const HAND_CONNECTIONS = [
   [0, 1],
@@ -71,16 +71,13 @@ const Detection = () => {
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Gambar video feed (mirror untuk kamera depan)
       ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
-      // Gambar landmarks dengan penyesuaian handedness
       if (results.multiHandLandmarks && results.multiHandedness) {
         for (let i = 0; i < results.multiHandLandmarks.length; i++) {
           const landmarks = results.multiHandLandmarks[i];
           const handedness = results.multiHandedness[i].label; // 'Left' atau 'Right'
 
-          // Adjust handedness untuk kamera depan
           const displayHandedness =
             facingMode === "user"
               ? handedness === "Right"
@@ -88,7 +85,6 @@ const Detection = () => {
                 : "Right"
               : handedness;
 
-          // Gambar konektor dan landmarks
           drawConnectors(ctx, landmarks, HAND_CONNECTIONS, {
             color: "#00FF00",
             lineWidth: 5,
