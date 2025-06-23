@@ -3,7 +3,10 @@ import io from "socket.io-client";
 import { Hands } from "@mediapipe/hands";
 import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
 
-const socket = io("http://52.65.78.89:5000"); // Ganti sesuai servermu
+const socket = io("https://telingakita.my.id", {
+  path: "/socket.io",
+  transports: ["websocket", "polling"],
+});
 
 const HAND_CONNECTIONS = [
   [0, 1],
