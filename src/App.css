@@ -1,43 +1,46 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global styling for the root container */
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 1.5rem;
+  background-color: #0f172a; /* dark background (Tailwind slate-900) */
+  color: white;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Optional: Smooth scroll */
+html {
+  scroll-behavior: smooth;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Optional: Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #475569; /* slate-600 */
+  border-radius: 4px;
+}
+::-webkit-scrollbar-track {
+  background-color: #1e293b; /* slate-800 */
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* Optional utility: Section headers */
+.section-title {
+  @apply text-2xl md:text-3xl font-bold text-yellow-400 mb-4;
 }
 
-.card {
-  padding: 2em;
+/* Optional utility: Paragraph */
+.section-text {
+  @apply text-base md:text-lg leading-relaxed text-justify text-gray-100;
 }
 
-.read-the-docs {
-  color: #888;
+/* Optional: Responsive container (if needed outside Tailwind class) */
+.container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
 }
