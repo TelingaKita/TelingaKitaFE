@@ -1,6 +1,5 @@
-// File: src/App.jsx
 import React, { useState, useEffect } from "react";
-import Sidebar from "./pages/Sidebar";
+import Sidebar from "./pages/Sidebar"; // Ini adalah navbar atas sekarang
 import Detection from "./pages/Detection";
 import TentangBISINDO from "./pages/TentangBISINDO";
 import TentangPengembang from "./pages/TentangPengembang";
@@ -18,9 +17,12 @@ const App = () => {
   if (showSplash) return <Splash />;
 
   return (
-    <div className="flex min-h-screen">
+    <div className="min-h-screen bg-white">
+      {/* Navbar atas */}
       <Sidebar selected={selected} setSelected={setSelected} />
-      <main className="flex-1 bg-gray-900 text-white overflow-y-auto p-6">
+
+      {/* Konten berdasarkan menu */}
+      <main className="p-6 text-black">
         {selected === "Deteksi Huruf" && <Detection />}
         {selected === "Tentang BISINDO" && <TentangBISINDO />}
         {selected === "Tentang Pengembang" && <TentangPengembang />}
