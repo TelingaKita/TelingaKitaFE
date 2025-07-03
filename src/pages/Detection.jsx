@@ -3,7 +3,7 @@ import io from "socket.io-client";
 import { Hands } from "@mediapipe/hands";
 import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
 
-const socket = io("http://52.65.78.89:5000");
+const socket = io("http://127.0.0.1:5000");
 
 const HAND_CONNECTIONS = [
   [0, 1], [1, 2], [2, 3], [3, 4],
@@ -14,18 +14,78 @@ const HAND_CONNECTIONS = [
   [0, 17],
 ];
 
+function segmentHandsToCanvasBlack(landmarksArray, outputSize = 224, padding = 20) {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = outputSize;
+  canvas.height = outputSize;
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, outputSize, outputSize);
+
+  let allX = [], allY = [];
+  for (const landmarks of landmarksArray) {
+    for (const lm of landmarks) {
+      allX.push(lm.x);
+      allY.push(lm.y);
+    }
+  }
+
+  const xMin = Math.min(...allX);
+  const xMax = Math.max(...allX);
+  const yMin = Math.min(...allY);
+  const yMax = Math.max(...allY);
+
+  const centerX = (xMin + xMax) / 2;
+  const centerY = (yMin + yMax) / 2;
+  const boxSize = Math.max(xMax - xMin, yMax - yMin) + padding / outputSize;
+  const scale = outputSize / boxSize;
+  const offsetX = outputSize / 2;
+  const offsetY = outputSize / 2;
+
+  for (const landmarks of landmarksArray) {
+    for (const [startIdx, endIdx] of HAND_CONNECTIONS) {
+      const start = landmarks[startIdx];
+      const end = landmarks[endIdx];
+      const x1 = (start.x - centerX) * scale + offsetX;
+      const y1 = (start.y - centerY) * scale + offsetY;
+      const x2 = (end.x - centerX) * scale + offsetX;
+      const y2 = (end.y - centerY) * scale + offsetY;
+
+      ctx.strokeStyle = "red";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    for (const lm of landmarks) {
+      const x = (lm.x - centerX) * scale + offsetX;
+      const y = (lm.y - centerY) * scale + offsetY;
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, 2 * Math.PI);
+      ctx.fillStyle = "lime";
+      ctx.fill();
+    }
+  }
+
+  return canvas;
+}
+
 const Detection = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const [prediction, setPrediction] = useState(null);
-  const [lastSpoken, setLastSpoken] = useState(null);
-  const [confidence, setConfidence] = useState(null);
-  const [facingMode, setFacingMode] = useState("user");
-  const [cameraError, setCameraError] = useState(false);
-  const [cameraActive, setCameraActive] = useState(false);
   const handsRef = useRef(null);
   const streamRef = useRef(null);
-  const intervalRef = useRef(null);
+  const [displayedPrediction, setDisplayedPrediction] = useState(null);
+  const [confidence, setConfidence] = useState(null);
+  const [facingMode, setFacingMode] = useState("user");
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState(false);
+  const [framePreview, setFramePreview] = useState(null);
+  const lastSpokenRef = useRef(null);
+  const FRAME_INTERVAL = 3000;
+  let lastSentTime = 0;
 
   const startCamera = (mode) => {
     navigator.mediaDevices
@@ -49,28 +109,34 @@ const Detection = () => {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
-    if (intervalRef.current) clearInterval(intervalRef.current);
     setCameraActive(false);
-    setPrediction(null);
+    setDisplayedPrediction(null);
     setConfidence(null);
-    window.speechSynthesis.cancel();
   };
 
   const toggleCamera = () => {
     cameraActive ? stopCamera() : (startCamera(facingMode), setCameraActive(true));
   };
 
+  const speak = (text) => {
+    if (window.speechSynthesis && text !== lastSpokenRef.current) {
+      const utter = new SpeechSynthesisUtterance("Huruf " + text);
+      utter.lang = "id-ID";
+      window.speechSynthesis.speak(utter);
+      lastSpokenRef.current = text;
+    }
+  };
+
   useEffect(() => {
     const hands = new Hands({
-      locateFile: (file) =>
-        `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
     });
 
     hands.setOptions({
       maxNumHands: 2,
       modelComplexity: 1,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5,
+      minDetectionConfidence: 0.8,
+      minTrackingConfidence: 0.8,
     });
 
     hands.onResults((results) => {
@@ -81,151 +147,122 @@ const Detection = () => {
       canvas.width = results.image.width;
       canvas.height = results.image.height;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(results.image, 0, 0);
 
-      if (results.multiHandLandmarks) {
-        for (let landmarks of results.multiHandLandmarks) {
-          drawConnectors(ctx, landmarks, HAND_CONNECTIONS, {
-            color: "#00FF00", lineWidth: 4,
-          });
-          drawLandmarks(ctx, landmarks, {
-            color: "#FF0000", radius: 3,
-          });
+      if (results.multiHandLandmarks?.length > 0) {
+        for (const landmarks of results.multiHandLandmarks) {
+          drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: "#00FF00", lineWidth: 2 });
+          drawLandmarks(ctx, landmarks, { color: "#FF0000", radius: 3 });
+        }
+
+        const now = Date.now();
+        if (now - lastSentTime >= FRAME_INTERVAL) {
+          const blackCanvas = segmentHandsToCanvasBlack(results.multiHandLandmarks);
+          const frame = blackCanvas.toDataURL("image/jpeg");
+          setFramePreview(frame);
+          socket.emit("process_frame", frame);
+          lastSentTime = now;
         }
       }
     });
 
     handsRef.current = hands;
     return () => {
-      if (handsRef.current) handsRef.current.close();
+      hands.close();
       stopCamera();
     };
   }, []);
 
   useEffect(() => {
     if (!cameraActive) return;
-
-    intervalRef.current = setInterval(() => {
+    const interval = setInterval(() => {
       const video = videoRef.current;
-      const canvas = canvasRef.current;
       const hands = handsRef.current;
-
-      if (
-        !video || !canvas || !hands ||
-        video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0
-      ) return;
-
-      try {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        // Process with MediaPipe
-        hands.send({ image: canvas });
-
-        // Send full frame to server
-        const frame = canvas.toDataURL("image/jpeg");
-        socket.emit("process_frame", frame);
-      } catch (err) {
-        console.error("⚠️ Processing error:", err);
+      if (video && hands && video.readyState >= 2) {
+        hands.send({ image: video });
       }
-    }, 1000); // Ambil frame tiap 1 detik
-
-    return () => clearInterval(intervalRef.current);
+    }, 200);
+    return () => clearInterval(interval);
   }, [cameraActive]);
 
   useEffect(() => {
     socket.on("prediction", (data) => {
-      setPrediction(data.label);
-      setConfidence(data.confidence);
+      if (data?.label && /^[A-Z]$/.test(data.label)) {
+        const conf = parseFloat(data.confidence).toFixed(1);
+        setConfidence(conf);
 
-      if (data.label && data.label !== lastSpoken) {
-        const utter = new SpeechSynthesisUtterance(`Huruf ${data.label}`);
-        utter.lang = "id-ID";
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utter);
-        setLastSpoken(data.label);
+        // Tampilkan label apapun confidence-nya
+        setDisplayedPrediction(data.label);
+
+        if (conf >= 85) {
+          speak(data.label);
+        }
+      } else {
+        setDisplayedPrediction(null);
+        setConfidence(null);
       }
     });
 
     return () => socket.off("prediction");
-  }, [lastSpoken]);
+  }, []);
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-screen bg-white text-black p-5">
-      {(!cameraActive || cameraError) && (
-        <div
-          className={`p-4 mb-6 rounded max-w-xl w-full text-sm border ${
-            cameraError
-              ? "bg-red-100 text-red-700 border-red-300"
-              : "bg-yellow-50 text-yellow-800 border-yellow-300"
-          }`}
-        >
-          <strong className="block mb-2">
-            {cameraError
-              ? "🚫 Kamera tidak terdeteksi."
-              : "ℹ️ Petunjuk Penggunaan Kamera"}
-          </strong>
-          <ul className="list-disc ml-5 space-y-1">
-            <li>Pastikan Anda memberikan izin akses kamera</li>
-            <li>Refresh halaman</li>
-            <li>Coba browser lain (Chrome/Edge/Firefox)</li>
-            <li>Periksa koneksi internet</li>
-            <li>Gunakan tombol untuk memulai atau mengganti kamera</li>
-          </ul>
-        </div>
-      )}
+    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      <h1 className="text-2xl font-bold mb-4">Deteksi Huruf BISINDO</h1>
 
-      <h1 className="text-2xl font-bold mb-4 text-center">
-        Deteksi Huruf Bahasa Isyarat <span className="text-yellow-600">BISINDO</span>
-      </h1>
-
-      <div className="flex gap-4 mb-4">
-        <button
-          onClick={toggleCamera}
-          className={`px-4 py-2 font-bold rounded text-white ${
-            cameraActive
-              ? "bg-red-500 hover:bg-red-600"
-              : "bg-green-500 hover:bg-green-600"
-          }`}
-        >
-          {cameraActive ? "Matikan Kamera" : "Mulai Kamera"}
+      <div className="flex gap-2 mb-4">
+        <button onClick={toggleCamera} className="bg-green-600 text-white px-4 py-2 rounded">
+          {cameraActive ? "Matikan Kamera" : "Aktifkan Kamera"}
         </button>
         <button
           onClick={() => {
-            setFacingMode((prev) =>
-              prev === "user" ? "environment" : "user"
-            );
-            if (cameraActive) {
-              stopCamera();
-              setTimeout(() => {
-                startCamera(facingMode === "user" ? "environment" : "user");
-                setCameraActive(true);
-              }, 500);
-            }
+            const next = facingMode === "user" ? "environment" : "user";
+            stopCamera();
+            setFacingMode(next);
+            setTimeout(() => {
+              startCamera(next);
+              setCameraActive(true);
+            }, 500);
           }}
-          className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded"
+          className="bg-yellow-500 text-white px-4 py-2 rounded"
         >
           Flip Kamera
         </button>
       </div>
 
-      <div className="relative border-4 border-gray-300 rounded-lg overflow-hidden shadow-md w-full max-w-[1000px] bg-white">
-        <video ref={videoRef} className="hidden" playsInline />
-        <canvas ref={canvasRef} className="w-full h-auto" />
-      </div>
+      {!cameraActive && (
+        <div className="bg-gray-100 text-sm text-gray-700 px-4 py-3 rounded shadow mb-4 max-w-md w-full">
+          <strong className="block mb-2">
+            {cameraError ? "🚫 Kamera tidak terdeteksi." : "ℹ️ Petunjuk Penggunaan Kamera"}
+          </strong>
+          <ul className="list-disc ml-5 space-y-1">
+            <li>Pastikan Anda memberikan izin akses kamera</li>
+            <li>Refresh halaman</li>
+            <li>Coba browser lain (Chrome/Edge/Firefox)</li>
+            <li>Gunakan tombol untuk memulai atau mengganti kamera</li>
+          </ul>
+        </div>
+      )}
 
-      {prediction && (
-        <div className="mt-6 text-center">
-          <h2 className="text-green-700 text-4xl font-bold">
-            Huruf Terdeteksi: {prediction}
-          </h2>
-          <p className="text-sm mt-2 text-gray-600">
-            Confidence: {confidence?.toFixed(1)}%
+      <video ref={videoRef} className="hidden" playsInline />
+      <canvas ref={canvasRef} className="w-full max-w-lg border" />
+
+      {displayedPrediction && (
+        <div className="mt-4 text-center">
+          <p className="text-lg font-semibold text-gray-700 mb-1">Hasil Deteksi Huruf:</p>
+          <h2 className="text-3xl font-bold text-green-700">{displayedPrediction}</h2>
+        </div>
+      )}
+
+      {confidence && confidence < 80 && (
+        <div className="mt-2 text-center">
+          <p className="text-red-600 font-semibold italic animate-pulse">
+            ⚠️ Posisikan tangan Anda dengan tepat
           </p>
         </div>
       )}
+
+    
     </div>
   );
 };
