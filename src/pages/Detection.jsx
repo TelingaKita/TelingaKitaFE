@@ -86,8 +86,10 @@ const Detection = () => {
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState(false);
   const [framePreview, setFramePreview] = useState(null);
-  const lastSpokenRef = useRef(null);
+  const [modelLoaded, setModelLoaded] = useState(false);
+  const lastSpeakTimeRef = useRef(0);
   const FRAME_INTERVAL = 3000;
+  const SPEAK_INTERVAL = 3000;
   let lastSentTime = 0;
 
   const startCamera = (mode) => {
@@ -122,11 +124,12 @@ const Detection = () => {
   };
 
   const speak = (text) => {
-    if (window.speechSynthesis && text !== lastSpokenRef.current) {
+    const now = Date.now();
+    if (window.speechSynthesis && now - lastSpeakTimeRef.current > SPEAK_INTERVAL) {
       const utter = new SpeechSynthesisUtterance("Huruf " + text);
       utter.lang = "id-ID";
       window.speechSynthesis.speak(utter);
-      lastSpokenRef.current = text;
+      lastSpeakTimeRef.current = now;
     }
   };
 
@@ -170,6 +173,8 @@ const Detection = () => {
     });
 
     handsRef.current = hands;
+    setModelLoaded(true);
+
     return () => {
       hands.close();
       stopCamera();
@@ -193,8 +198,6 @@ const Detection = () => {
       if (data?.label && /^[A-Z]$/.test(data.label)) {
         const conf = parseFloat(data.confidence).toFixed(1);
         setConfidence(conf);
-
-        // Tampilkan label apapun confidence-nya
         setDisplayedPrediction(data.label);
 
         if (conf >= 85) {
@@ -233,6 +236,18 @@ const Detection = () => {
         </button>
       </div>
 
+      {!modelLoaded && (
+        <div className="text-center text-gray-500 animate-pulse mb-4">
+          <p>🔄 Memuat model MediaPipe Hands...</p>
+        </div>
+      )}
+
+      {!cameraActive && !cameraError && modelLoaded && (
+        <div className="animate-pulse text-center text-gray-400 mt-4">
+          <p>Menunggu aktivasi kamera...</p>
+        </div>
+      )}
+
       {!cameraActive && (
         <div className="bg-gray-100 text-sm text-gray-700 px-4 py-3 rounded shadow mb-4 max-w-md w-full">
           <strong className="block mb-2">
@@ -265,7 +280,16 @@ const Detection = () => {
         </div>
       )}
 
-    
+      {cameraActive && (
+        <div className="mt-6 text-center text-sm text-gray-500">
+          <p>🟢 Kamera aktif. Gerakkan tangan Anda di depan kamera.</p>
+          <p className="mt-1">Model akan mengklasifikasikan huruf BISINDO setiap 3 detik.</p>
+        </div>
+      )}
+
+      <footer className="mt-8 text-center text-xs text-gray-400">
+        <p>© 2025 TelingaKita — Penerjemah BISINDO</p>
+      </footer>
     </div>
   );
 };

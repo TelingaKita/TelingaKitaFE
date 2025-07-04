@@ -1,23 +1,23 @@
 import React from "react";
-import bersamaImg from "../Bersama.png"; // Ubah path sesuai lokasi
+import bersamaImg from "../Bersama.png"; // Ubah path sesuai lokasi gambar
 
 const TentangBISINDO = () => {
   return (
     <section className="p-6 text-black max-w-4xl mx-auto">
       <h2 className="text-3xl font-bold mb-6">📘 Tentang BISINDO</h2>
 
-      <p className="mb-4 leading-relaxed">
-        <strong>Bahasa Isyarat Indonesia (BISINDO)</strong> adalah bahasa isyarat yang digunakan oleh komunitas Tuli di berbagai daerah di Indonesia. BISINDO merupakan bentuk komunikasi visual yang mengandalkan gerakan tangan, ekspresi wajah, dan posisi tubuh untuk menyampaikan makna.
+      <p className="mb-4 leading-relaxed text-justify">
+        <strong>Bahasa Isyarat Indonesia (BISINDO)</strong> adalah bahasa isyarat alami yang digunakan oleh komunitas Tuli di berbagai daerah di Indonesia. BISINDO tidak hanya menjadi alat komunikasi, tetapi juga bagian dari budaya dan identitas komunitas Tuli yang kaya dan beragam. Bahasa ini disampaikan melalui kombinasi ekspresi wajah, posisi tubuh, serta gerakan tangan yang memiliki struktur linguistik tersendiri.
       </p>
 
       <h3 className="text-2xl font-semibold mb-3">🕰️ Sejarah Singkat BISINDO</h3>
 
-      <p className="mb-4 leading-relaxed">
-        Bahasa isyarat telah digunakan sejak lama, dan BISINDO dikenal luas sejak awal tahun 2000-an. Komunitas Tuli memperjuangkan pengakuan BISINDO sebagai bahasa yang mencerminkan budaya dan identitas mereka.
+      <p className="mb-4 leading-relaxed text-justify">
+        Penggunaan bahasa isyarat telah ada sejak lama di komunitas Tuli Indonesia. Namun, BISINDO mulai dikenal luas sebagai bahasa komunitas sekitar awal tahun 2000-an melalui berbagai organisasi, komunitas, dan advokasi yang memperjuangkan hak Tuli atas komunikasi yang setara. Salah satu tokoh penting dalam penyebaran BISINDO adalah Ce Lucia, pendiri IBIC (Indonesia Bahasa Isyarat Center), yang telah aktif mengajarkan dan mempromosikan BISINDO di berbagai daerah.
       </p>
 
-      <p className="mb-4 leading-relaxed">
-        Sebelum BISINDO, sistem seperti SIBI (Sistem Isyarat Bahasa Indonesia) digunakan dalam pendidikan, namun tidak berkembang secara alami dalam komunitas. Kini, BISINDO menjadi simbol hak, budaya, dan komunikasi komunitas Tuli.
+      <p className="mb-4 leading-relaxed text-justify">
+        Sebelum adanya BISINDO, pemerintah memperkenalkan <strong>SIBI (Sistem Isyarat Bahasa Indonesia)</strong> sebagai sistem isyarat berbasis bahasa lisan Indonesia. Namun, SIBI dinilai tidak berkembang secara alami dan sulit diterima oleh komunitas Tuli karena tidak mencerminkan struktur alami komunikasi visual mereka. Oleh karena itu, BISINDO lebih diterima luas karena berasal dari dan untuk komunitas itu sendiri.
       </p>
 
       <figure className="mb-6 text-center">
@@ -31,9 +31,28 @@ const TentangBISINDO = () => {
         </figcaption>
       </figure>
 
-      <p className="text-lg font-medium">
-        🙏 Terima kasih kepada IBIC atas kontribusinya dalam mengembangkan BISINDO di Indonesia!
+      <h3 className="text-2xl font-semibold mb-3">👥 Fungsi dan Peran BISINDO</h3>
+      <p className="mb-4 leading-relaxed text-justify">
+        BISINDO bukan hanya alat komunikasi, tetapi juga alat penyampaian emosi, ekspresi diri, dan pendidikan. Bahasa ini digunakan dalam kehidupan sehari-hari, baik dalam lingkungan rumah tangga, komunitas, hingga dunia kerja. Keberadaan BISINDO membantu Tuli mengakses pendidikan, pelayanan publik, dan informasi secara lebih inklusif.
       </p>
+
+      <h3 className="text-2xl font-semibold mb-3">⚖️ Hak Komunikasi & Inklusi</h3>
+      <p className="mb-4 leading-relaxed text-justify">
+        Komunitas Tuli di Indonesia memiliki hak untuk berkomunikasi dalam bahasa mereka sendiri. Pengakuan dan penggunaan BISINDO di ranah publik merupakan bagian dari hak asasi manusia. Pengembangan teknologi seperti aplikasi ini diharapkan dapat menjadi jembatan bagi masyarakat umum untuk lebih mengenal dan menghargai bahasa dan budaya Tuli.
+      </p>
+
+      <h3 className="text-2xl font-semibold mb-3">🌏 Harapan ke Depan</h3>
+      <p className="mb-6 leading-relaxed text-justify">
+        Dengan semakin dikenalnya BISINDO dan dukungan teknologi seperti penerjemah otomatis, diharapkan masyarakat luas lebih sadar akan keberagaman cara berkomunikasi. Harapan kami, aplikasi ini dapat membantu memperkenalkan BISINDO kepada lebih banyak orang dan mendukung inklusi sosial yang setara bagi semua.
+      </p>
+
+      <p className="text-lg font-medium text-center mb-2">
+        🙏 Terima kasih kepada IBIC dan semua komunitas Tuli yang telah menjadi inspirasi dalam pengembangan aplikasi ini.
+      </p>
+
+      <footer className="mt-8 text-center text-xs text-gray-400">
+        <p>© 2025 TelingaKita — Penerjemah BISINDO berbasis AI</p>
+      </footer>
     </section>
   );
 };
